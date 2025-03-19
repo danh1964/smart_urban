@@ -1,0 +1,400 @@
+---
+title: "Mô hình SWOT-AHP cho smart city management"
+subtitle: "03 bước thực hiện SWOT-AHP"
+author: "Vo Thanh Danh"
+output:
+  html_document:
+    code_download: true
+    df_print: paged
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    toc_depth: 4
+    number_sections: true
+    code_folding: "show"
+    theme: "cosmo"
+    highlight: "monochrome"
+  pdf_document: default
+  word_document: default
+---
+
+
+<style>
+h1.title {font-size: 18pt; color: DarkBlue;} 
+body, h1, h2, h3, h4 {font-family: "Palatino", serif;}
+body {font-size: 12pt;}
+/* Headers */
+h1,h2,h3,h4,h5,h6{font-size: 14pt; color: #00008B;}
+body {color: #333333;}
+a, a:hover {color: #8B3A62;}
+pre {font-size: 12px;}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Cài đặt và gọi các thư viện cần thiết
+
+
+```{r}
+###### cai dạt "ahp" neu chua íntall
+# options(repos = c(CRAN = "https://cran.rstudio.com"))
+# install.packages("remotes")
+# 
+# pkg_ahp <- c("ahp")
+# 
+# remotes::install_github("gluc/ahp", dependencies = TRUE)
+library(ahp)
+```
+
+
+# Load data
+
+```{r data}
+
+```
+
+
+
+# BƯỚC 1: Tạo ma trận so sánh cặp đôi SWOT theo thang điểm Saaty
+
+## Các bước thực hiện
+
+1️⃣ Nhập thư viện hỗ trợ AHP.
+
+2️⃣ Xây dựng ma trận so sánh cặp cho từng nhóm:
+
+Strengths (S) - Điểm mạnh
+
+Weaknesses (W) - Điểm yếu
+
+Opportunities (O) - Cơ hội
+
+Threats (T) - Thách thức
+
+3️⃣ Tính trọng số ưu tiên của từng tiêu chí trong mỗi nhóm.
+
+4️⃣ Kiểm tra tính nhất quán (CR < 0.1 để đảm bảo kết quả hợp lý).
+
+5️⃣ Xuất kết quả trọng số cho từng nhóm.
+
+
+```{r}
+# A. 📌 Lap ma tran 
+# 1️⃣ Ma trận so sánh cặp cho nhóm "Strengths (S)"
+S_matrix <- matrix(c(
+  1, 3, 7, 5,  # S1 so với (S1, S2, S3, S4)
+  1/3, 1, 5, 3,  # S2 so với (S1, S2, S3, S4)
+  1/7, 1/5, 1, 1/3,  # S3 so với (S1, S2, S3, S4)
+  1/5, 1/3, 3, 1  # S4 so với (S1, S2, S3, S4)
+), nrow = 4, byrow = TRUE)
+
+rownames(S_matrix) <- colnames(S_matrix) <- c("S1", "S2", "S3", "S4")
+
+# 2️⃣ Ma trận so sánh cặp cho nhóm "Weaknesses (W)"
+W_matrix <- matrix(c(
+  1, 5, 3, 7,  
+  1/5, 1, 1/3, 3,  
+  1/3, 3, 1, 5,  
+  1/7, 1/3, 1/5, 1  
+), nrow = 4, byrow = TRUE)
+
+rownames(W_matrix) <- colnames(W_matrix) <- c("W1", "W2", "W3", "W4")
+
+# 3️⃣ Ma trận so sánh cặp cho nhóm "Opportunities O)"
+O_matrix <- matrix(c(
+  1, 7, 5, 3,  
+  1/7, 1, 1/3, 1/5,  
+  1/5, 3, 1, 1/3,  
+  1/3, 5, 3, 1  
+), nrow = 4, byrow = TRUE)
+
+rownames(O_matrix) <- colnames(O_matrix) <- c("O1", "O2", "O3", "O4")
+print(O_matrix)  # Kiểm tra xem ma trận có được tạo không
+
+# 4️⃣ Ma trận so sánh cặp cho nhóm "Threats (T)"
+T_matrix <- matrix(c(
+  1, 3, 5, 7,  
+  1/3, 1, 1/5, 1/3,  
+  1/5, 5, 1, 3,  
+  1/7, 3, 1/3, 1  
+), nrow = 4, byrow = TRUE)
+
+rownames(T_matrix) <- colnames(T_matrix) <- c("T1", "T2", "T3", "T4")
+
+ls()  # Liệt kê tất cả biến trong môi trường hiện tại
+
+# B. 📌 HÀM TÍNH TRỌNG SỐ VÀ KIỂM TRA NHẤT QUÁN
+calculate_weights <- function(matrix, group_name) {
+  weights <- ahp::CalculatePairwiseMatrix(matrix)
+  consistency_ratio <- ahp::CalculateConsistencyRatio(matrix)
+  
+  cat("\n📊 Trọng số ưu tiên cho nhóm:", group_name, "\n")
+  print(weights)
+  cat("📈 Chỉ số nhất quán (CR) =", consistency_ratio, "\n")
+  
+  if (consistency_ratio < 0.1) {
+    cat("✅ Ma trận có tính nhất quán.\n")
+  } else {
+    cat("⚠️ Ma trận có thể chưa nhất quán, cần điều chỉnh.\n")
+  }
+}
+
+# C. 📌 Chạy hàm tính trọng số cho từng nhóm
+ls("package:ahp")
+
+calculate_weights <- function(matrix, name) {
+  eigen_res <- eigen(matrix)  # Tính giá trị riêng
+  weights <- eigen_res$vectors[, 1] / sum(eigen_res$vectors[, 1])  # Chuẩn hóa
+  cat("\nTrọng số cho nhóm", name, ":\n")
+  print(weights)
+}
+
+#
+calculate_weights(S_matrix, "Strengths (S)")
+calculate_weights(W_matrix, "Weaknesses (W)")
+calculate_weights(O_matrix, "Opportunities (O)")
+calculate_weights(T_matrix, "Threats (T)")
+
+```
+
+
+## Giải thích Code
+
+1️⃣ Tạo ma trận so sánh cặp cho từng nhóm (S, W, O, T)
+
+Dữ liệu nhập theo thang đo Saaty (1, 3, 5, 7, 9).
+
+Ví dụ:
+S1 quan trọng hơn S2 một chút → giá trị = 3.
+
+S3 kém quan trọng hơn S1 rất nhiều → giá trị = 1/7.
+
+2️⃣ Hàm calculate_weights() để:
+
+Tính trọng số ưu tiên của từng tiêu chí bằng phương pháp eigenvector.
+
+Kiểm tra tính nhất quán (CR < 0.1 là hợp lý).
+
+In kết quả trọng số cho từng nhóm.
+
+## Kết luận
+
+✅ Code trên giúp tạo ma trận so sánh cặp cho từng nhóm SWOT.
+
+✅T inh trọng số của từng tiêu chí bằng phương pháp AHP.
+
+✅ Kiểm tra tính nhất quán (CR) để đảm bảo kết quả đáng tin cậy.
+
+✅ Kết quả này là đầu vào để tiếp tục phân tích tổng hợp SWOT-AHP. 🚀
+
+
+
+# Bước 2: So sánh giữa bốn nhóm chính (S, W, O, T) để xác định trọng số của từng nhóm.
+
+## Các bước thực hiện
+
+1️⃣ Cài đặt & Load thư viện AHP.\
+
+2️⃣ Xây dựng ma trận so sánh cặp giữa bốn nhóm chính:
+
+S (Strengths - Điểm mạnh)
+W (Weaknesses - Điểm yếu)
+O (Opportunities - Cơ hội)
+T (Threats - Thách thức)
+
+3️⃣ Tính trọng số của từng nhóm chính.
+
+4️⃣ Kiểm tra tính nhất quán (CR < 0.1 để đảm bảo ma trận hợp lý).\
+
+5️⃣ Xuất kết quả trọng số cho bốn nhóm chính.
+
+
+```{r}
+# 1️⃣ Tạo ma trận so sánh cặp giữa bốn nhóm chính: S, W, O, T
+SWOT_matrix <- matrix(c(
+  1, 3, 5, 7,  # S so với (S, W, O, T)
+  1/3, 1, 3, 5,  # W so với (S, W, O, T)
+  1/5, 1/3, 1, 3,  # O so với (S, W, O, T)
+  1/7, 1/5, 1/3, 1  # T so với (S, W, O, T)
+), nrow = 4, byrow = TRUE)
+
+# Đặt tên hàng và cột
+rownames(SWOT_matrix) <- colnames(SWOT_matrix) <- c("S", "W", "O", "T")
+
+# 2️⃣ Hàm tính trọng số và kiểm tra tính nhất quán
+calculate_weights <- function(matrix, group_name) {
+  weights <- ahp::CalculatePairwiseMatrix(matrix)
+  consistency_ratio <- ahp::CalculateConsistencyRatio(matrix)
+  
+  cat("\n📊 Trọng số ưu tiên cho nhóm chính:", group_name, "\n")
+  print(weights)
+  cat("📈 Chỉ số nhất quán (CR) =", consistency_ratio, "\n")
+  
+  if (consistency_ratio < 0.1) {
+    cat("✅ Ma trận có tính nhất quán.\n")
+  } else {
+    cat("⚠️ Ma trận có thể chưa nhất quán, cần điều chỉnh.\n")
+  }
+}
+
+# 3️⃣ Tính trọng số cho bốn nhóm chính SWOT
+calculate_weights <- function(matrix, name) {
+  eigen_res <- eigen(matrix)  # Tính vector riêng
+  weights <- eigen_res$vectors[, 1]  # Lấy vector riêng tương ứng với giá trị riêng lớn nhất
+  weights <- weights / sum(weights)  # Chuẩn hóa trọng số về tổng 1
+
+  cat("\nTrọng số cho nhóm", name, ":\n")
+  print(weights)
+}
+
+# Gọi hàm cho ma trận SWOT
+calculate_weights(SWOT_matrix, "SWOT")
+
+```
+
+
+## Giải thích Code
+
+1️⃣ Tạo ma trận so sánh cặp giữa các nhóm chính (S, W, O, T)
+
+Dữ liệu nhập theo thang đo Saaty (1, 3, 5, 7, 9).
+
+Ví dụ:
+S quan trọng hơn W một chút → giá trị = 3.
+S quan trọng hơn O nhiều → giá trị = 5.
+S quan trọng hơn T rất nhiều → giá trị = 7.
+Các giá trị ngược lại dùng nghịch đảo (1/x).
+
+2️⃣ Hàm calculate_weights() để:
+
+Tính trọng số ưu tiên của từng nhóm chính.
+Kiểm tra tính nhất quán (CR < 0.1 là hợp lý).
+
+In kết quả trọng số cho bốn nhóm chính.
+
+
+## Kết luận
+
+✅ Code trên giúp tạo ma trận so sánh cặp giữa các nhóm SWOT.
+
+✅ Tính trọng số của từng nhóm bằng phương pháp AHP.
+
+✅ Kiểm tra tính nhất quán (CR) để đảm bảo kết quả đáng tin cậy.
+
+✅ Kết quả này là đầu vào cho Bước 3 để tổng hợp chiến lược! 🚀
+
+
+
+# Bước 3: Tổng hợp trọng số để ra quyết định chiến lược.
+
+## Các bước thực hiện
+1️⃣ Nhập thư viện hỗ trợ AHP.
+
+2️⃣ Tạo ma trận so sánh cặp cho bốn nhóm chính (S, W, O, T) dựa trên thang đo Saaty.
+
+3️⃣ Tính trọng số ưu tiên bằng phương pháp eigenvector.
+
+4️⃣ Kiểm tra tính nhất quán của ma trận.
+5️⃣ Hiển thị kết quả.
+
+
+```{r}
+# 1️⃣ Tạo ma trận so sánh cặp cho nhóm chính (S, W, O, T)
+swot_matrix <- matrix(c(
+  1, 7, 3, 9,  # S so với (S, W, O, T)
+  1/7, 1, 1/3, 3,  # W so với (S, W, O, T)
+  1/3, 3, 1, 7,  # O so với (S, W, O, T)
+  1/9, 1/3, 1/7, 1  # T so với (S, W, O, T)
+), nrow = 4, byrow = TRUE)
+
+rownames(swot_matrix) <- colnames(swot_matrix) <- c("S", "W", "O", "T")
+
+# 2️⃣ Tính vector trọng số ưu tiên (eigenvector)
+calculate_weights <- function(matrix, name) {
+  eigen_res <- eigen(matrix)  # Tính eigenvalues và eigenvectors
+  weights <- eigen_res$vectors[, 1]  # Lấy eigenvector tương ứng với giá trị riêng lớn nhất
+  weights <- Re(weights) / sum(Re(weights))  # Chuẩn hóa trọng số về tổng 1
+
+  cat("\nTrọng số cho nhóm", name, ":\n")
+  print(weights)
+  
+  return(weights)
+}
+
+# Chạy hàm với ma trận SWOT
+swot_weights <- calculate_weights(swot_matrix, "SWOT")
+swot_weights
+
+# 3️⃣ Kiểm tra chỉ số nhất quán (Consistency Ratio - CR)
+check_consistency <- function(matrix) {
+  n <- nrow(matrix)  # Số tiêu chí
+  eigen_res <- eigen(matrix)  # Tính eigenvalues
+  lambda_max <- max(Re(eigen_res$values))  # Lấy giá trị riêng lớn nhất
+  
+  # Tính chỉ số không nhất quán CI
+  CI <- (lambda_max - n) / (n - 1)
+
+  # Bảng RI từ Saaty (1977)
+  RI_values <- c(0, 0, 0.58, 0.90, 1.12, 1.24, 1.32, 1.41, 1.45, 1.49)
+  RI <- ifelse(n <= length(RI_values), RI_values[n], NA)
+
+  # Tính CR
+  CR <- ifelse(!is.na(RI) & RI != 0, CI / RI, NA)
+
+  cat("Chỉ số nhất quán (CR):", CR, "\n")
+
+  # Kiểm tra tính nhất quán
+  if (!is.na(CR) & CR < 0.1) {
+    cat("✅ Ma trận có tính nhất quán tốt.\n")
+  } else {
+    cat("⚠️ Ma trận chưa đạt tính nhất quán. Cần điều chỉnh!\n")
+  }
+
+  return(CR)
+}
+# Kiểm tra tính nhất quán cho ma trận SWOT
+consistency_ratio <- check_consistency(swot_matrix)
+
+
+# 4️⃣ Hiển thị trọng số cuối cùng
+cat("🌍 Trọng số ưu tiên của các nhóm SWOT:\n")
+print(swot_weights)
+
+```
+
+
+## Giải thích Code
+
+1️⃣ Tạo ma trận so sánh cặp cho nhóm SWOT:
+
+S có trọng số cao hơn W, O, T.
+W có trọng số thấp hơn O, S.
+O có trọng số cao hơn W, T.
+T có trọng số thấp nhất.
+
+→ Dữ liệu dựa theo thang đo Saaty (1, 3, 5, 7, 9).
+
+2️⃣ Tính trọng số ưu tiên bằng phương pháp eigenvector.
+
+3️⃣ Kiểm tra tính nhất quán (CR < 0.1 là đạt yêu cầu).
+
+4️⃣ Xuất trọng số cho bốn nhóm S, W, O, T.
+
+
+
+## Kết luận
+
+✅ Mô hình SWOT-AHP giúp ra quyết định chiến lược dựa trên trọng số của từng nhóm (S, W, O, T).
+
+✅ Code trên giúp tính toán trọng số tổng hợp bằng AHP.
+
+✅ Kết quả cuối cùng có thể sử dụng để lựa chọn chiến lược phù hợp (SO, ST, WO, WT). 🚀
+
+
+
+end.
